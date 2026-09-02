@@ -1,9 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Image, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import {useFonts} from 'expo-font';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Footer from '../components/Footer';
 import ButtonStart from '../components/ButtonStart';
+import ButtonPause from '../components/ButtonPause';
+
 
 export default function Timer({navigation}) {
 // Cria a constante que armazena a/as fonte(s)
@@ -32,6 +34,27 @@ export default function Timer({navigation}) {
         const novoNumero = numero.slice(0, -1)
         setNumero(novoNumero);
     }
+
+    // Função de play do Timer
+    const [timer, setTempo] = useState(0);
+    const [rodando, setRodando] = useState(false);
+
+    
+    useEffect(() => {
+        let intervalo;
+        
+        if (rodando) {
+            intervalo = setInterval(() => {
+                setTempo((tempoAnterior) => tempoAnterior + 1);
+            }, 1000);
+        }
+        return () => clearInterval(intervalo);
+    }, [ rodando ]);
+    
+    const minutes = Math.floor(timer / 60);
+    const seconds = timer % 60;
+    const minutesformat = String(minutes).padStart(2, "0");
+    const secondsformat = String(seconds).padStart(2, "0");
     
     if(!fontsLoaded){
         return null;
@@ -48,6 +71,7 @@ export default function Timer({navigation}) {
         <View style={styles.oclock}>
             <Text style={styles.zeros}>
                 {horas}h {minutos}m {segundos}s
+                {/* {minutesformat} : {secondsformat} */}
             </Text>
         </View>
 
@@ -124,11 +148,39 @@ export default function Timer({navigation}) {
             </TouchableOpacity>
         </View>
 
-        <View style={styles.buttonStart}>
-            <ButtonStart></ButtonStart>
-        </View>
+        <View style={styles.containerInput}>
+                <TextInput style={styles.inputRepeticao}
+                    placeholder="Repetições"
+                    keyboardType="numeric"
+                    />
+                
+                
+                <TextInput style={styles.inputIntervalo}
+                    placeholder="Intervalo"
+                    keyboardType="numeric"
+                />
+                
+                <TextInput style={styles.inputContagem}
+                    placeholder="Contagem"
+                    value=''
+                />
 
-        <Footer navigation={navigation}></Footer>
+                <TouchableOpacity>
+                <Image 
+                    source={require('../../assets/images/addCronometro.png')}
+                    style={styles.addCronometro}
+                />
+                </TouchableOpacity>
+            </View>
+
+        <TouchableOpacity style={styles.buttonStart}>
+            <ButtonStart  onPress={() => setRodando(true)}/>
+        </TouchableOpacity>
+
+        {/* <TouchableOpacity > */}
+            {/* <ButtonPause style={styles.buttonPause} onPress={() => setRodando(false)}/> */}
+        {/* </TouchableOpacity> */}
+
     </View>
   );
 }
@@ -144,6 +196,8 @@ const styles = StyleSheet.create({
         gap: 15,
         flexDirection: 'row',
         marginBottom: 8,
+        bottom: 50
+
     },
 
     timer:{
@@ -165,14 +219,14 @@ const styles = StyleSheet.create({
   oclock: {
     display: 'flex',
     position:'absolute',
-    top: 150,
+    top: 110,
     justifyContent: 'center'
       
     },
     
   zeros: {
     color: '#FFFAFA',
-    fontSize: 60,
+    fontSize: 55,
     fontWeight:'bold',
 
   },
@@ -201,6 +255,55 @@ button: {
   },
   buttonStart: {
     position: 'absolute',
-    bottom: 190
-  }
+    bottom: 130
+  },
+  buttonPause:{
+
+  },
+  containerInput:{
+      flexDirection:'row',
+      width:330,
+      height:50,
+      bottom: 50,
+    },
+    inputRepeticao: {
+        backgroundColor: '#FFFAFA',
+        width:110,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        fontWeight:'bold'
+    },
+    inputIntervalo:{
+        backgroundColor: '#FFFAFA',
+        width:110,
+        fontWeight:'bold',
+
+        borderWidth: 3,
+        borderColor: '#4747D4',
+
+        borderTopWidth: 0,
+        borderBottomWidth: 0,
+
+        borderLeftWidth: 3,
+        borderLeftColor: '#4747D4',
+    },
+    inputContagem:{
+        height: 95,
+        backgroundColor: '#FFFAFA',
+        width:110,
+        textAlign:'center',
+        textAlignVertical: 'top',
+        paddingTop: 17,
+        borderBottomLeftRadius: 10,
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        fontWeight:'bold'
+    },
+    addCronometro:{
+        width: 60,
+        height: 60,
+        resizeMode: 'contain',
+        right: 85,
+        top: 92.5
+    }
 });

@@ -54,7 +54,6 @@ export default function Historico({navigation}) {
 
             
 
-            <Footer navigation={navigation}></Footer>    
         </View>
     
     );
@@ -65,6 +64,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#000080',
     },
     containerHistorico:{
         flexDirection:'row',
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
         top: 30,
         left: 5,
         width: 180,
-        backgroundColor: '#000080',
     },
     title: {
         color: '#FFFAFA',

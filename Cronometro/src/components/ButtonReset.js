@@ -4,7 +4,7 @@ import ButtonStart from "../components/ButtonStart";
 import Footer from "../components/Footer";
 
 
-export default function Historico({navigation}) {
+export default function ButtonReset({ onPress }) {
     const [fontsLoaded] = useFonts({
         'iInstead': require('../../assets/fonts/iInstead.ttf'),
         'gotham': require('../../assets/fonts/gothamknights.ttf')
@@ -15,7 +15,7 @@ export default function Historico({navigation}) {
     return (
 
             <View style={styles.container}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={onPress}>
                     <Text style={styles.text}>
                         Redefinir
                     </Text>
@@ -29,12 +29,12 @@ const styles = StyleSheet.create({
     container :{
         backgroundColor: '#FF6868',
         padding: 13,
-        width: 300,
+        width: 175,
         borderRadius: 35,
     },
     text: {
         color: '#FFFAFA',
-        fontSize: 35,
+        fontSize: 30,
         textAlign: 'center',
         justifyContent: 'center',
         fontFamily: 'iInstead'

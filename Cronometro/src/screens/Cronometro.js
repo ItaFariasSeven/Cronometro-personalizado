@@ -2,7 +2,9 @@ import { TouchableOpacity, View, Text, StyleSheet, Image, TextInput } from "reac
 import {useFonts} from 'expo-font';
 import ButtonStart from "../components/ButtonStart";
 import Footer from "../components/Footer";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import ButtonPause from "../components/ButtonPause";
+import ButtonReset from "../components/ButtonReset";
 
 
 export default function Cronometro({navigation}) {
@@ -31,6 +33,31 @@ export default function Cronometro({navigation}) {
             const novoNumero = numero.slice(0, -1)
             setNumero(novoNumero);
         }
+
+        // Função de play do Cronêmetro
+        const [timer, setTempo] = useState(0);
+        const [rodando, setRodando] = useState(false);
+    
+        
+        useEffect(() => {
+            let intervalo;
+            
+            if (rodando) {
+                intervalo = setInterval(() => {
+                    setTempo((tempoAnterior) => tempoAnterior + 1);
+                }, 1000);
+            }
+            return () => clearInterval(intervalo);
+        }, [ rodando ]);
+        
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        const minutesformat = String(minutes).padStart(2, "0");
+        const secondsformat = String(seconds).padStart(2, "0");
+
+        //Funçaõ de substituir botão de iniciar pelo de pausar e redefinir
+        const [clicado, setClicado] = useState(false);
+        const [clicadoNovamente, setClicadoNovamente] = useState(true);
             
         if(!fontsLoaded){
             return null;
@@ -45,114 +72,35 @@ export default function Cronometro({navigation}) {
             
             <View style={styles.oclock}>
                 <Text style={styles.zeros}>
-                    {horas}h {minutos}m {segundos}s
+                    {minutesformat} : {secondsformat}
                 </Text>
             </View>
             
-            <View style={styles.container}>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("1")}>
-                    <Text style={styles.text}>
-                        1
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("2")}>
-                    <Text style={styles.text}>
-                        2
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("3")}>
-                    <Text style={styles.text}>
-                        3
-                    </Text>
-                </TouchableOpacity>
-            </View>
-            
-            <View style={styles.container}>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("4")}>
-                    <Text style={styles.text}>
-                        4
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("5")}>
-                    <Text style={styles.text}>
-                        5
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("6")}>
-                    <Text style={styles.text}>
-                        6
-                    </Text>
-                </TouchableOpacity>
-            </View>
-            
-            <View style={styles.container}>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("7")}>
-                    <Text style={styles.text}>
-                        7
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("8")}>
-                    <Text style={styles.text}>
-                        8
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("9")}>
-                    <Text style={styles.text}>
-                        9
-                    </Text>
-                </TouchableOpacity>
-            </View>
-            
-            <View style={styles.container}>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("00")}>
-                    <Text style={styles.text}>
-                        00
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => adicionaNumero("0")}>
-                    <Text style={styles.text}>
-                        0
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => apagarNumero()}>
-                    <Image
-                        source={require('../../assets/images/delete.png')}
-                        style={styles.icon}
-                    />
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.containerInput}>
-                <TextInput style={styles.inputRepeticao}
-                    placeholder="Repetições"
-                    keyboardType="numeric"
-                    />
-                
-                
-                <TextInput style={styles.inputIntervalo}
-                    placeholder="Intervalo"
-                    keyboardType="numeric"
-                />
-                
-                <TextInput style={styles.inputContagem}
-                    placeholder="Contagem"
-                    value=''
-                />
-
-                <TouchableOpacity>
-                <Image 
-                    source={require('../../assets/images/addCronometro.png')}
-                    style={styles.addCronometro}
-                />
-                </TouchableOpacity>
-            </View>
-            
             <View style={styles.buttonStart}>
-                <ButtonStart></ButtonStart>
+                {rodando ? (
+                    <View style={styles.buttonPauseReset}>
+                        <ButtonPause style={styles.buttonPause} 
+                            onPress={() => {
+                                setRodando(false);  
+                        }}
+                        />
+                        <ButtonReset style={styles.buttonReset} 
+                            onPress={() => { 
+                                setRodando(false) ;
+                                setTempo(0);    
+                        }}
+                        />
+                    </View>
+                ):(
+                    <ButtonStart 
+                        onPress={() => {
+                            setRodando(true) ; 
+                    }}
+                    />
+                )}
             </View>
 
 
-            <Footer navigation={navigation}></Footer>    
         </View>
     
     );
@@ -190,7 +138,7 @@ const styles = StyleSheet.create({
   oclock: {
     display: 'flex',
     position:'absolute',
-    top: 110,
+    top: 210,
     justifyContent: 'center'
       
     },
@@ -224,54 +172,15 @@ button: {
     height: 55,
     resizeMode: 'contain',
 },
-buttonStart: {
-    position: 'absolute',
-    bottom: 120
-},
-  containerInput:{
-      flexDirection:'row',
-      width:330,
-      height:50,
-      bottom: 40,
+    buttonStart: {
+        position: 'absolute',
+        bottom: 200,
     },
-    inputRepeticao: {
-        backgroundColor: '#FFFAFA',
-        width:110,
-        borderTopLeftRadius: 10,
-        borderBottomLeftRadius: 10,
-        fontWeight:'bold'
+    buttonPauseReset:{
+        flexDirection:'row',
+        gap: 10
     },
-    inputIntervalo:{
-        backgroundColor: '#FFFAFA',
-        width:110,
-        fontWeight:'bold',
+    buttonReset:{
 
-        borderWidth: 3,
-        borderColor: '#4747D4',
-
-        borderTopWidth: 0,
-        borderBottomWidth: 0,
-
-        borderLeftWidth: 3,
-        borderLeftColor: '#4747D4',
-    },
-    inputContagem:{
-        height: 95,
-        backgroundColor: '#FFFAFA',
-        width:110,
-        textAlign:'center',
-        textAlignVertical: 'top',
-        paddingTop: 17,
-        borderBottomLeftRadius: 10,
-        borderTopRightRadius: 10,
-        borderBottomRightRadius: 10,
-        fontWeight:'bold'
-    },
-    addCronometro:{
-        width: 60,
-        height: 60,
-        resizeMode: 'contain',
-        right: 85,
-        top: 92.5
     }
 })

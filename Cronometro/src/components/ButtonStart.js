@@ -2,7 +2,7 @@ import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
 import {useFonts} from 'expo-font';
 
 
-export default function ButtonStart() {
+export default function ButtonStart({ onPress }) {
     const [fontsLoaded] = useFonts({
         'iInstead': require('../../assets/fonts/iInstead.ttf')
         })
@@ -11,7 +11,7 @@ export default function ButtonStart() {
         }
     return (
         <View style={styles.container}>
-             <TouchableOpacity>
+             <TouchableOpacity onPress={onPress}>
                 <Text style={styles.text}>
                     Iniciar
                 </Text>
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     container :{
         backgroundColor: '#00CDDB',
         padding: 13,
-        width: 300,
+        width: 350,
         borderRadius: 35,
     },
     text: {

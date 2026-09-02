@@ -1,18 +1,36 @@
-import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet, Image, ImageBackground } from "react-native";
 import {useFonts} from 'expo-font';
 
-
-export default function Footer({navigation}) {
+export default function Footer({ state, navigation }) {
     const [fontsLoaded] = useFonts({
         'iInstead': require('../../assets/fonts/iInstead.ttf'),
         'gotham': require('../../assets/fonts/gothamknights.ttf')
         })
+
+    const rotaAtual = state.routes[state.index].name;
+
+    // const rotaAtual = useNavigationState(
+    //     state => state.routes[state.index].name
+    // );
+
         if(!fontsLoaded){
             return null;
         }
     return (
         <View style={styles.container}>
-             <TouchableOpacity style={styles.space} onPress={() => navigation.navigate("Timer")}>
+        
+                { rotaAtual == "Timer" && (
+                <ImageBackground
+                    source={require('../../assets/icons/play-solid.png')}
+                    resizeMode="cover"
+                    style={styles.backTimer}
+                />
+                )}
+             <TouchableOpacity 
+                 style={styles.space} 
+                 onPress={() => {
+                    navigation.navigate("Timer");
+                }} >
                 <Image 
                     source={require('../../assets/icons/navTimer.png')}
                     style={styles.icon}
@@ -22,7 +40,19 @@ export default function Footer({navigation}) {
                 </Text>
             </TouchableOpacity>
 
-             <TouchableOpacity style={styles.space} onPress={() => navigation.navigate("Cronometro")}>
+
+             { rotaAtual == "Cronometro" && (
+                <ImageBackground
+                    source={require('../../assets/icons/play-solid.png')}
+                    resizeMode="cover"
+                    style={styles.backCronometro}
+                />
+                )}
+             <TouchableOpacity 
+             style={styles.space} 
+             onPress={() => {
+                navigation.navigate("Cronometro")
+             }}>
                 <Image 
                     source={require('../../assets/icons/navCronometro.png')}
                     style={styles.icon}
@@ -32,7 +62,19 @@ export default function Footer({navigation}) {
                 </Text>
             </TouchableOpacity>
 
-             <TouchableOpacity style={styles.space} onPress={() => navigation.navigate("Historico")}>
+
+             { rotaAtual == "Historico" && (
+                <ImageBackground
+                    source={require('../../assets/icons/play-solid.png')}
+                    resizeMode="cover"
+                    style={styles.backHistorico}
+                />
+                )}
+             <TouchableOpacity 
+             style={styles.space} 
+             onPress={() => {
+                navigation.navigate("Historico")
+                }}>
                 <Image 
                     source={require('../../assets/icons/navHistorico.png')}
                     style={styles.icon}
@@ -41,6 +83,7 @@ export default function Footer({navigation}) {
                     Histórico
                 </Text>
             </TouchableOpacity>
+
         </View>
     
     );
@@ -75,7 +118,39 @@ const styles = StyleSheet.create({
     },
     space: {
         textAlign: 'center',
-       justifyContent: 'center',
-       alignItems: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    backTimer:{
+        width: 180,
+        height: 180,
+        position: 'absolute',
+        bottom: -15,
+        left: -21.8,
+        transform:[{
+            rotate: '90deg'
+        }]
+    },
+    backCronometro:{
+        width: 180,
+        height: 180,
+        position: 'absolute',
+        bottom: -15,
+        alignItems:'center',
+        zIndex: 0,
+        transform:[{
+            rotate: '90deg'
+        }]
+    },
+    backHistorico:{
+        width: 180,
+        height: 180,
+        position: 'absolute',
+        bottom: -15,
+        right: -21.8,
+        zIndex: 0,
+        transform:[{
+            rotate: '90deg'
+        }]
     }
 })

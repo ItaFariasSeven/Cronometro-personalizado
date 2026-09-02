@@ -6,34 +6,42 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Timer from './src/screens/Timer';
 import Historico from './src/screens/Historico';
 import Cronometro from './src/screens/Cronometro';
+import Footer from './src/components/Footer';
 
-const Stack = createNativeStackNavigator();
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+// const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
     <NavigationContainer style={styles.container}>
 
-        <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: {
-            backgroundColor:'#000080',
-          }
-        }}>
-          <Stack.Screen 
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+            contentStyle: {
+              backgroundColor:'#000080',
+            }
+          }}
+          tabBar={(props) => (
+            <Footer{...props} />
+          )}
+          >
+          <Tab.Screen 
             name='Timer'
             component={Timer}
           />
-          <Stack.Screen 
+          <Tab.Screen 
             name='Cronometro'
             component={Cronometro}
           />
-          <Stack.Screen 
+          <Tab.Screen 
             name='Historico'
             component={Historico}
           />
           
-        </Stack.Navigator>
+        </Tab.Navigator>
       
     </NavigationContainer>
   );
