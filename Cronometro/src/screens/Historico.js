@@ -1,8 +1,10 @@
-import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet, Image, FlatList } from "react-native";
 import {useFonts} from 'expo-font';
 import ButtonStart from "../components/ButtonStart";
 import Footer from "../components/Footer";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 
 
@@ -11,16 +13,33 @@ export default function Historico({navigation}) {
         'iInstead': require('../../assets/fonts/iInstead.ttf'),
         'gotham': require('../../assets/fonts/gothamknights.ttf')
         })
+
+        const [historico, setHistorico] = useState([])
+
+        async function carregarHistorico() {
+            const dados = await AsyncStorage.getItem("historicoTimer");
+
+            if (dados) {
+                setHistorico(JSON.parse(dados));
+            }
+        }
+
+        useEffect(() => {
+            carregarHistorico();
+        }, []);
+
+        function formatarTempo(totalSegundos) {
+
+            const horas = Math.floor(totalSegundos / 3600);
+
+            const minutos = Math.floor(
+                (totalSegundos % 3600) / 60
+            );
         
-        // Função que no cronômetro armazena os números 
-        const [numero, setNumero] = useState("");
-    
-        // Função que preenche os 0's até chegar em 6
-        const tempo = numero.padStart(6, "0");
-        // Função para as Horas "h", Minutos "m", e Segundos "s"
-        const horas = tempo.slice(0, 2);
-        const minutos = tempo.slice(2, 4);
-        const segundos = tempo.slice(4, 6);
+            const segundos = totalSegundos % 60;
+        
+            return `${String(horas).padStart(2, "0")}h ${String(minutos).padStart(2, "0")}m ${String(segundos).padStart(2, "0")}s`;
+        }
         
         if(!fontsLoaded){
             return null;
@@ -33,26 +52,31 @@ export default function Historico({navigation}) {
                 </Text>
             </View>
 
-            <View style={styles.containerHistorico}>
-                <Text style={styles.zeros}>
-                    {horas}h {minutos}m {segundos}s
-                </Text>
+            <View style={styles.containerInfos}>
+                
+                <FlatList 
 
-                <View>
-                    <Text style={styles.contagem}>
-                        Contagem
-                    </Text>
-                    <Text style={styles.contagem0}>
-                        0
-                    </Text>
-                </View>
+                    data={historico}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                    
+                        <View style={styles.listInfos}>
+                            <Text style={styles.text}>
+                                {formatarTempo(item.tempoTrabalho)}
+                            </Text>
+                    
+                            <Text style={styles.text}>
+                                Contagem: {item.repeticoes}
+                            </Text>
+                    
+                            <Text style={styles.text}>
+                                {item.data}
+                            </Text>
+                        </View>
 
-                <Text style={styles.date}>
-                    Data
-                </Text>
+                    )}
+                />
             </View>
-
-            
 
         </View>
     
@@ -65,12 +89,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#000080',
-    },
-    containerHistorico:{
-        flexDirection:'row',
-        backgroundColor: '#4747D4',
-        padding: 10,
-        borderRadius: 8,
     },
     timer:{
         display: 'flex',
@@ -85,28 +103,27 @@ const styles = StyleSheet.create({
         fontFamily:'monospace',
         fontWeight: 'bold'
     },
-    zeros: {
-        color: '#FFFAFA',
-        fontSize: 25,
-        fontWeight:'bold',
+    containerInfos:{
+        display:'flex',
+        flexDirection:'row',
+        // backgroundColor: '#4747D4',
+        width:'85%'
     },
-    contagem:{
-        color: '#FFFAFA',
-        fontSize: 20,
-        fontWeight:'bold',
-        paddingEnd: 20,
-        paddingStart: 20,
-        flexDirection:'column',
+    listInfos:{
+        flexDirection:'row',
+        backgroundColor: '#4747D4',
+        padding: 10,
+        alignItems:'center',
+        // justifyContent:'center',
+        gap: 10,
+        marginBottom: 8,
+        borderRadius:8
     },
-    contagem0:{
+    text:{
+        fontSize: 17.5,
+        fontFamily:'monospace',
+        fontWeight: 'bold',
         color: '#FFFAFA',
-        fontSize: 20,
-        fontWeight:'bold',
-        textAlign: 'center'
-    },
-    date:{
-        color: '#FFFAFA',
-        fontSize: 15,
-        fontWeight:'bold',
-    },
+
+    }
 })

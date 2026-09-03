@@ -63,7 +63,7 @@ export default function Footer({ state, navigation }) {
             </TouchableOpacity>
 
 
-             { rotaAtual == "Historico" && (
+             { rotaAtual == "Alarme" && (
                 <ImageBackground
                     source={require('../../assets/icons/play-solid.png')}
                     resizeMode="cover"

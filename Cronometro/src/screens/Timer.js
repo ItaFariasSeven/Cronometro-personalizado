@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import Footer from '../components/Footer';
 import ButtonStart from '../components/ButtonStart';
 import ButtonPause from '../components/ButtonPause';
+import ButtonReset from '../components/ButtonReset';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 export default function Timer({navigation}) {
@@ -13,48 +15,135 @@ export default function Timer({navigation}) {
     'iInstead': require('../../assets/fonts/iInstead.ttf')
     })
     
-    // Função que no cronômetro armazena os números 
+    // armazena os números 
     const [numero, setNumero] = useState("");
+    
+    // controlar a repetição do Timer
+    const [repeticoes, setRepeticoes] = useState("");
+    const [intervalo, setIntervalo] = useState("");
+    
+    const [tempoRestante, setTempoRestante] = useState(0);
+    const [repeticoesRestantes, setRepeticoesRestantes] = useState(0);
+    const [rodandoTimer, setRodandoTimer] = useState(false);
+    const [fase, setFase] = useState("parado");
+    
+    const [duracaoTrabalho, setDuracaoTrabalho] = useState(0);
+    const [duracaoIntervalo, setDuracaoIntervalo] = useState(0);
     
     // Função que no cronômetro adiciona os números digitados
     function adicionaNumero(valor) {        
-        if (numero.length < 6) {
+        if (numero.length + valor.length <= 6) {
             setNumero(numero + valor);
         }
     }
-
-    // Função que preenche os 0's até chegar em 6
-    const tempo = numero.padStart(6, "0");
-    // Função para as Horas "h", Minutos "m", e Segundos "s"
-    const horas = tempo.slice(0, 2);
-    const minutos = tempo.slice(2, 4);
-    const segundos = tempo.slice(4, 6);
-
+    // Função que no cronômetro apaga os números digitados
     function apagarNumero() {
         const novoNumero = numero.slice(0, -1)
         setNumero(novoNumero);
     }
 
-    // Função de play do Timer
-    const [timer, setTempo] = useState(0);
-    const [rodando, setRodando] = useState(false);
-
-    
-    useEffect(() => {
-        let intervalo;
+    function converterParaSegundos(numero) {
+        const tempo = numero.padStart(6, "0");
         
-        if (rodando) {
-            intervalo = setInterval(() => {
-                setTempo((tempoAnterior) => tempoAnterior + 1);
-            }, 1000);
+        const horas = Number(tempo.slice(0, 2));
+        const minutos = Number(tempo.slice(2, 4));
+        const segundos = Number(tempo.slice(4, 6));
+
+        return (
+            horas * 3600 +
+            minutos * 60 +
+            segundos
+        )
+    }
+
+    function formatarTempo(totalSegundos) {
+        const horas = Math.floor(totalSegundos / 3600);
+        const minutos = Math.floor((totalSegundos % 3600) / 60);
+        const segundos = totalSegundos % 60;
+        return `${String(horas).padStart(2, "0")}h ${String(minutos).padStart(2, "0")}m ${String(segundos).padStart(2, "0")}s`
+    }
+
+    function iniciarTimer() {
+        const trabalho = converterParaSegundos(numero);
+        const quantidadeRepeticoes = Number(repeticoes);
+        const pausa = Number(intervalo);
+
+        if (trabalho <=0 || quantidadeRepeticoes <=0) {
+            return;
         }
-        return () => clearInterval(intervalo);
-    }, [ rodando ]);
-    
-    const minutes = Math.floor(timer / 60);
-    const seconds = timer % 60;
-    const minutesformat = String(minutes).padStart(2, "0");
-    const secondsformat = String(seconds).padStart(2, "0");
+        setDuracaoTrabalho(trabalho);
+        setDuracaoIntervalo(pausa);
+        setTempoRestante(trabalho);
+        setRepeticoesRestantes(quantidadeRepeticoes);
+        setFase("trabalho");
+        setRodandoTimer(true)
+    }
+
+    function continuarTimer() {
+        setRodandoTimer(true)
+    }
+
+    useEffect(() => {
+        if(!rodandoTimer){
+            return;
+        }
+        const intervaloContagem = setInterval(() => {
+            setTempoRestante(tempoAnterior => {
+                if(tempoAnterior > 1) {
+                    return tempoAnterior - 1;
+                }
+                if (fase === "trabalho") {
+                    if (repeticoesRestantes <= 1) {
+                        setRepeticoesRestantes(0);
+                        setRodandoTimer(false);
+                        setFase("finalizado");
+                        return 0;
+                    }
+                    if(duracaoIntervalo > 0){
+                        setFase("intervalo");
+                        return duracaoIntervalo;
+                    }
+                    setRepeticoesRestantes(anterior => anterior -1);
+                    return duracaoTrabalho;
+                }
+                if (fase === "intervalo") {
+                    setRepeticoesRestantes(anterior => anterior -1);
+                    setFase("trabalho");
+                    return duracaoTrabalho;
+                }
+                return 0;
+            });
+            
+        }, 1000);
+        return () => clearInterval(intervaloContagem);
+    }, [
+        rodandoTimer, fase, repeticoesRestantes, duracaoTrabalho,duracaoIntervalo
+    ]
+)
+
+async function salvarHistorico() {
+    const novoRegistro = {
+        id: Date.now().toString(),
+        data: new Date().toLocaleDateString(),
+        tempoTrabalho: duracaoTrabalho,
+        repeticoes: Number(repeticoes),
+        intervalo: duracaoIntervalo,
+        status: "finalizado"
+    };
+    const historicoSalvo = await AsyncStorage.getItem("historicoTimer");
+
+    const historicoAtual = historicoSalvo ? JSON.parse(historicoSalvo) : [];
+
+    const novoHistorico = [ ...historicoAtual, novoRegistro ];
+
+    await AsyncStorage.setItem("historicoTimer", JSON.stringify(novoHistorico))
+}
+useEffect(() => {
+    if (fase === "finalizado") {
+        salvarHistorico();
+    }
+}, [fase]);
+
     
     if(!fontsLoaded){
         return null;
@@ -70,8 +159,10 @@ export default function Timer({navigation}) {
 
         <View style={styles.oclock}>
             <Text style={styles.zeros}>
-                {horas}h {minutos}m {segundos}s
-                {/* {minutesformat} : {secondsformat} */}
+                <Text>{fase === "parado"
+                    ? formatarTempo(converterParaSegundos(numero)) : fase === "trabalho"
+                        ? formatarTempo(tempoRestante) : formatarTempo(0)}
+                </Text>
             </Text>
         </View>
 
@@ -150,40 +241,67 @@ export default function Timer({navigation}) {
 
         <View style={styles.containerInput}>
                 <TextInput style={styles.inputRepeticao}
-                    placeholder="Repetições"
+                    placeholder="Repetição"
                     keyboardType="numeric"
+                    value={repeticoes}
+                    onChangeText={setRepeticoes}
                     />
                 
                 
                 <TextInput style={styles.inputIntervalo}
                     placeholder="Intervalo"
                     keyboardType="numeric"
+                    value={intervalo}
+                    onChangeText={setIntervalo}
                 />
                 
                 <TextInput style={styles.inputContagem}
                     placeholder="Contagem"
-                    value=''
+                    value={String(repeticoesRestantes)}
+                    editable={false}
                 />
 
-                <TouchableOpacity>
-                <Image 
-                    source={require('../../assets/images/addCronometro.png')}
-                    style={styles.addCronometro}
-                />
-                </TouchableOpacity>
+                {fase === "intervalo" && (
+                    <View style={styles.conatinerIntervaloText}>
+                        <Text style={styles.textIntervalo}>Intervalo:</Text>
+
+                        <Text style={styles.textIntervaloZeros}>
+                            {formatarTempo(tempoRestante)}
+                        </Text>
+                    </View>
+                )}
+
             </View>
 
-        <TouchableOpacity style={styles.buttonStart}>
-            <ButtonStart  onPress={() => setRodando(true)}/>
-        </TouchableOpacity>
-
-        {/* <TouchableOpacity > */}
-            {/* <ButtonPause style={styles.buttonPause} onPress={() => setRodando(false)}/> */}
-        {/* </TouchableOpacity> */}
+        <View style={styles.buttonStart}>
+            {rodandoTimer ? (
+                <View style={styles.buttonPauseReset}>
+                    <ButtonPause style={styles.buttonPause} 
+                        onPress={() => {
+                            setRodandoTimer(false);  
+                    }}
+                    />
+                    <ButtonReset style={styles.buttonReset} 
+                        onPress={() => { 
+                            setRodandoTimer(false) ;
+                            setTempoRestante(0);
+                            setRepeticoesRestantes(0);
+                            setFase("parado");    
+                    }}
+                    />
+                </View>
+            ):(
+                <ButtonStart 
+                    onPress={fase === "parado"
+                        ? iniciarTimer : continuarTimer}
+                />
+            )}
+        </View>
 
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
     geralContainer: {
@@ -196,7 +314,7 @@ const styles = StyleSheet.create({
         gap: 15,
         flexDirection: 'row',
         marginBottom: 8,
-        bottom: 50
+        bottom: 65
 
     },
 
@@ -219,16 +337,42 @@ const styles = StyleSheet.create({
   oclock: {
     display: 'flex',
     position:'absolute',
-    top: 110,
+    top: 100,
     justifyContent: 'center'
-      
-    },
+    
+},
     
   zeros: {
     color: '#FFFAFA',
     fontSize: 55,
     fontWeight:'bold',
-
+    
+},
+  conatinerIntervaloText:{
+      flexDirection:'row',
+      position:'absolute',
+      top: 100,
+      justifyContent: 'center',
+      alignItems:'center',
+      textAlign:'center',
+      gap:15,
+    },
+    textIntervalo:{
+        color: '#FFFAFA',
+        fontSize: 30,
+        fontWeight:'bold',
+        justifyContent: 'center',
+        alignItems:'center',
+        textAlign:'center',
+        paddingLeft: 25
+    },
+    textIntervaloZeros:{
+        color: '#FFFAFA',
+        fontSize: 30,
+        justifyContent: 'center',
+        alignItems:'center',
+        textAlign:'center',
+        
   },
 
 button: {
@@ -262,48 +406,67 @@ button: {
   },
   containerInput:{
       flexDirection:'row',
-      width:330,
+      width:400,
       height:50,
-      bottom: 50,
+      bottom: 60,
     },
     inputRepeticao: {
         backgroundColor: '#FFFAFA',
-        width:110,
+        width:160,
         borderTopLeftRadius: 10,
         borderBottomLeftRadius: 10,
-        fontWeight:'bold'
+        fontWeight:'bold',
+        height: 95,
+        textAlignVertical: 'center',
+        textAlign:'center',
+        fontSize:30
     },
     inputIntervalo:{
         backgroundColor: '#FFFAFA',
-        width:110,
+        width:160,
         fontWeight:'bold',
+        height: 95,
+        textAlignVertical: 'center',
+        textAlign:'center',
 
         borderWidth: 3,
         borderColor: '#4747D4',
-
+        
         borderTopWidth: 0,
         borderBottomWidth: 0,
-
+        
         borderLeftWidth: 3,
         borderLeftColor: '#4747D4',
+
+        fontSize:30
     },
     inputContagem:{
         height: 95,
-        backgroundColor: '#FFFAFA',
-        width:110,
+        backgroundColor: '#4564A8',
+        width:80,
         textAlign:'center',
-        textAlignVertical: 'top',
-        paddingTop: 17,
-        borderBottomLeftRadius: 10,
+        textAlignVertical: 'center',
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,
-        fontWeight:'bold'
+        fontWeight:'bold',
+        fontSize:35
     },
     addCronometro:{
         width: 60,
         height: 60,
         resizeMode: 'contain',
-        right: 85,
+        right: 190,
         top: 92.5
+    },
+    buttonStart: {
+        position: 'absolute',
+        bottom: 140,
+    },
+    buttonPauseReset:{
+        flexDirection:'row',
+        gap: 10
+    },
+    buttonReset:{
+
     }
 });
