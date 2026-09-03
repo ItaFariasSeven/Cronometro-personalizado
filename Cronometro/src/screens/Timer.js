@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Image, Text, View, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Image, Text, View, TouchableOpacity, TextInput, Modal } from 'react-native';
 import {useFonts} from 'expo-font';
 import { useState, useEffect } from 'react';
 import Footer from '../components/Footer';
@@ -144,6 +144,8 @@ useEffect(() => {
     }
 }, [fase]);
 
+const [modalInfo, setModalInfo] = useState(false);
+
     
     if(!fontsLoaded){
         return null;
@@ -156,6 +158,56 @@ useEffect(() => {
                 Timer
             </Text>
         </View>
+
+        {/* Início do Modal */}
+        {/* Botão para abrir Modal */}
+        <TouchableOpacity 
+            style={styles.modalContainer}
+            onPress={() => setModalInfo(true)}
+        >
+            <Image
+                source={require('../../assets/icons/circle-question.png')}
+                style={styles.QuestionIcon}
+            />
+        </TouchableOpacity>
+
+        {/* Modal */}
+        <Modal 
+            visible={modalInfo}
+            transparent={true}
+            animationType='fade'
+            onRequestClose={() => setModalInfo(false)}
+        >
+            <View style={styles.modalBackground}>
+                <View style={styles.modalComplete}>
+                    <TouchableOpacity
+                        sytle={styles.exitButton}
+                        onPress={() => setModalInfo(false)}
+                    >
+                        <Image
+                            source={require('../../assets/icons/button-exit.png')}
+                            style={styles.exitModal}
+                        />
+                    </TouchableOpacity>
+                    <Text style={styles.textModal}>
+                        Instruções de como usar o Timer:
+                    </Text>
+                    <Text style={styles.textModalInstruction}>
+                        1. Selecione a quantidade de repetições que deseja realizar.
+                    </Text>
+                    <Text style={styles.textModalInstruction}>
+                        2. Informe quantos segundos de intervalo deseja entre as repetições.
+                    </Text>
+                    <Text style={styles.textModalInstruction}>
+                        3. No teclado numérico, informe o tempo da atividade e clique em iniciar.
+                    </Text>
+                    <Text style={styles.textModalInstruction}>
+                        O Timer contará o tempo da atividade. Ao finalizar, iniciará o intervalo. Depois do intervalo, uma repetição será descontada e o próximo ciclo começará.
+                    </Text>
+                </View>
+            </View>
+        </Modal>
+        {/* Fim do Modal */}
 
         <View style={styles.oclock}>
             <Text style={styles.zeros}>
@@ -396,6 +448,58 @@ button: {
     width: 55,
     height: 55,
     resizeMode: 'contain',
+  },
+  modalContainer:{
+      position:'absolute',
+      top:'5%',
+      right:'6%',
+    },
+    QuestionIcon:{
+        width:55,
+        height:55,
+    },
+    exitModal:{
+        width:60,
+        height:60,
+        position:'absolute',
+        bottom:2,
+        left:285
+  },
+  exitButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 2,
+},
+  modalBackground:{
+    flex: 1,
+    backgroundColor:'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+},
+modalComplete:{
+    width:'85%',
+    backgroundColor: '#4564A8',
+    left: '2%',
+    bottom:'18%',
+    borderRadius:10,
+    paddingHorizontal: 25,
+    paddingBottom: 25,
+    paddingTop: 60,
+    position: 'relative'
+    },
+    textModal:{
+        color: '#FFFFFF',
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 20,
+  }, 
+  textModalInstruction:{
+    color: '#FFFFFF',
+    fontSize: 17,
+    lineHeight: 25,
+    marginBottom: 12,
   },
   buttonStart: {
     position: 'absolute',
