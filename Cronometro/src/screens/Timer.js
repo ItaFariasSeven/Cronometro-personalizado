@@ -1,3 +1,4 @@
+import { useAudioPlayer } from 'expo-audio';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Image, Text, View, TouchableOpacity, TextInput, Modal } from 'react-native';
 import {useFonts} from 'expo-font';
@@ -9,7 +10,9 @@ import ButtonReset from '../components/ButtonReset';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
+
 export default function Timer({navigation}) {
+    const player = useAudioPlayer(require('../../assets/sounds/notificacao.mp3'));
 // Cria a constante que armazena a/as fonte(s)
     const [fontsLoaded] = useFonts({
     'iInstead': require('../../assets/fonts/iInstead.ttf')
@@ -19,8 +22,8 @@ export default function Timer({navigation}) {
     const [numero, setNumero] = useState("");
     
     // controlar a repetição do Timer
-    const [repeticoes, setRepeticoes] = useState("");
-    const [intervalo, setIntervalo] = useState("");
+    const [repeticoes, setRepeticoes] = useState("1");
+    const [intervalo, setIntervalo] = useState("0");
     
     const [tempoRestante, setTempoRestante] = useState(0);
     const [repeticoesRestantes, setRepeticoesRestantes] = useState(0);
@@ -29,6 +32,15 @@ export default function Timer({navigation}) {
     
     const [duracaoTrabalho, setDuracaoTrabalho] = useState(0);
     const [duracaoIntervalo, setDuracaoIntervalo] = useState(0);
+
+    function tocarSom() {
+        try {
+            player.seekTo(0); // garante que toque do início
+            player.play();
+        } catch (error) {
+            console.log("Erro ao tocar som:", error);
+        }
+    }
     
     // Função que no cronômetro adiciona os números digitados
     function adicionaNumero(valor) {        
@@ -82,6 +94,13 @@ export default function Timer({navigation}) {
     function continuarTimer() {
         setRodandoTimer(true)
     }
+
+    useEffect(() => {
+        if (fase === "finalizado") {
+            salvarHistorico();
+            tocarSom();
+        }
+    }, [fase]);
 
     useEffect(() => {
         if(!rodandoTimer){
@@ -291,7 +310,7 @@ const [modalInfo, setModalInfo] = useState(false);
             </TouchableOpacity>
         </View>
 
-        <View style={styles.containerInput}>
+        {/* <View style={styles.containerInput}>
                 <TextInput style={styles.inputRepeticao}
                     placeholder="Repetição"
                     keyboardType="numeric"
@@ -323,6 +342,46 @@ const [modalInfo, setModalInfo] = useState(false);
                     </View>
                 )}
 
+            </View> */}
+
+            <View style={styles.containerInput}>
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Repetições</Text>
+                    <TextInput
+                        style={styles.inputRepeticao}
+                        keyboardType="numeric"
+                        value={repeticoes}
+                        onChangeText={setRepeticoes}
+                    />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Intervalo (s)</Text>
+                    <TextInput
+                        style={styles.inputIntervalo}
+                        keyboardType="numeric"
+                        value={intervalo}
+                        onChangeText={setIntervalo}
+                    />
+                </View>
+
+                <View style={styles.inputGroupContagem}>
+                    <Text style={styles.inputLabel}>Restantes</Text>
+                    <TextInput
+                        style={styles.inputContagem}
+                        value={String(repeticoesRestantes)}
+                        editable={false}
+                    />
+                </View>
+
+                {fase === "intervalo" && (
+                    <View style={styles.conatinerIntervaloText}>
+                        <Text style={styles.textIntervalo}>Intervalo:</Text>
+                        <Text style={styles.textIntervaloZeros}>
+                            {formatarTempo(tempoRestante)}
+                        </Text>
+                    </View>
+                )}
             </View>
 
         <View style={styles.buttonStart}>
@@ -513,24 +572,38 @@ modalComplete:{
       width:400,
       height:50,
       bottom: 60,
+      alignItem: 'flex-start',
+    },
+    inputGroup: {
+        width: 160,
+        alignItems: 'center',
+    },
+    inputGroupContagem: {
+        width: 80,
+        alignItems: 'center',
+    },
+    inputLabel: {
+        color: '#FFFAFA',
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        textAlign: 'center',
     },
     inputRepeticao: {
         backgroundColor: '#FFFAFA',
-        width:160,
+        width:'100%',
+        height: 70,
         borderTopLeftRadius: 10,
         borderBottomLeftRadius: 10,
         fontWeight:'bold',
-        height: 95,
-        textAlignVertical: 'center',
         textAlign:'center',
         fontSize:30
     },
     inputIntervalo:{
         backgroundColor: '#FFFAFA',
-        width:160,
+        width:'100%',
+        height: 70,
         fontWeight:'bold',
-        height: 95,
-        textAlignVertical: 'center',
         textAlign:'center',
 
         borderWidth: 3,
@@ -545,15 +618,15 @@ modalComplete:{
         fontSize:30
     },
     inputContagem:{
-        height: 95,
+        height: 70,
         backgroundColor: '#4564A8',
-        width:80,
+        width:'100%',
         textAlign:'center',
         textAlignVertical: 'center',
         borderTopRightRadius: 10,
         borderBottomRightRadius: 10,
         fontWeight:'bold',
-        fontSize:35
+        fontSize:30
     },
     addCronometro:{
         width: 60,

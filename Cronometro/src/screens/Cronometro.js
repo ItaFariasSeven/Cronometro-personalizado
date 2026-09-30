@@ -2,7 +2,7 @@ import { TouchableOpacity, View, Text, StyleSheet, Image, TextInput } from "reac
 import {useFonts} from 'expo-font';
 import ButtonStart from "../components/ButtonStart";
 import Footer from "../components/Footer";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ButtonPause from "../components/ButtonPause";
 import ButtonReset from "../components/ButtonReset";
 
@@ -38,28 +38,55 @@ export default function Cronometro({navigation}) {
         const [timer, setTempo] = useState(0);
         const [rodando, setRodando] = useState(false);
     
+        const [elapsed, setElapsed] = useState(0); // em milissegundos
+
+        const startTimeRef = useRef(null); // timestamp de quando começou/retomou
+        const elapsedBeforePauseRef = useRef(0); // tempo acumulado antes da pausa atual
         
         useEffect(() => {
             let intervalo;
             
             if (rodando) {
+                startTimeRef.current = Date.now() 
+
                 intervalo = setInterval(() => {
-                    setTempo((tempoAnterior) => tempoAnterior + 1);
-                }, 1000);
+                    const agora = Date.now();
+                    const decorrido = elapsedBeforePauseRef.current + (agora - startTimeRef.current);
+                    setElapsed(decorrido);
+            }, 10);
             }
             return () => clearInterval(intervalo);
-        }, [ rodando ]);
-        
-        const minutes = Math.floor(timer / 60);
-        const seconds = timer % 60;
+        }, [rodando]);
+
+        function iniciar() {
+            setRodando(true);
+        }
+
+        function pausar() {
+            // salva o tempo acumulado até agora antes de pausar
+            elapsedBeforePauseRef.current = elapsed;
+            setRodando(false);
+        }
+
+        function resetar() {
+            setRodando(false);
+            elapsedBeforePauseRef.current = 0;
+            startTimeRef.current = null;
+            setElapsed(0);
+        }
+
+        // Formatação: minutos, segundos e centésimos
+        const totalCentesimos = Math.floor(elapsed / 10);
+        const totalSegundos = Math.floor(totalCentesimos / 100);
+        const minutes = Math.floor(totalSegundos / 60);
+        const seconds = totalSegundos % 60;
+        const centesimos = totalCentesimos % 100;
+
         const minutesformat = String(minutes).padStart(2, "0");
         const secondsformat = String(seconds).padStart(2, "0");
+        const centesimosformat = String(centesimos).padStart(2, "0");
 
-        //Funçaõ de substituir botão de iniciar pelo de pausar e redefinir
-        const [clicado, setClicado] = useState(false);
-        const [clicadoNovamente, setClicadoNovamente] = useState(true);
-            
-        if(!fontsLoaded){
+        if (!fontsLoaded) {
             return null;
         }
     return (
@@ -72,7 +99,7 @@ export default function Cronometro({navigation}) {
             
             <View style={styles.oclock}>
                 <Text style={styles.zeros}>
-                    {minutesformat} : {secondsformat}
+                    {minutesformat} : {secondsformat} : {centesimosformat}
                 </Text>
             </View>
             
@@ -80,22 +107,15 @@ export default function Cronometro({navigation}) {
                 {rodando ? (
                     <View style={styles.buttonPauseReset}>
                         <ButtonPause style={styles.buttonPause} 
-                            onPress={() => {
-                                setRodando(false);  
-                        }}
+                            onPress={pausar}
                         />
                         <ButtonReset style={styles.buttonReset} 
-                            onPress={() => { 
-                                setRodando(false) ;
-                                setTempo(0);    
-                        }}
+                            onPress={resetar}
                         />
                     </View>
                 ):(
                     <ButtonStart 
-                        onPress={() => {
-                            setRodando(true) ; 
-                    }}
+                        onPress={iniciar}
                     />
                 )}
             </View>
